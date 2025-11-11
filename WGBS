@@ -1,0 +1,19 @@
+source activate
+conda activate cgmap
+
+for i in `cat sample`
+do
+cgmaptools convert bismark2cgmap -i T${i}_final -o ${i}_cgmap
+cgmaptools mbin -i ../5cgmap/${i}_cgmap -B 200 -c 4 -f pdf -t ${i} -p ${i} > mbin.${i}.data
+bedGraphToBigWig ../mbin.${i}.data blueberry.chrom.sizes ${i}_200bp.bw
+cgmaptools mstat -i ${i}.cgmap -c 4 -p ${i} -t ${i} -f pdf
+cgmaptools mstat -i ${i}.cgmap -c 4 -p ${i} -t ${i} >${i}.mstat.data
+cgmaptools mbin -i ${i}.cgmap -B 200000 -c 4 -C CG -t ${i} -p ${i}_CG > mbin_200kb.${i}_CG.data
+cgmaptools mbin -i ${i}.cgmap -B 200000 -c 4 -C CHG -t ${i} -p ${i}_CHG > mbin_200kb.${i}_CHG.data
+cgmaptools mbin -i ${i}.cgmap -B 200000 -c 4 -C CHH -t ${i} -p ${i}_CHH > mbin_200kb.${i}_CHH.data
+cgmaptools mfg -i ${i}.cgmap -r region.fragreg >${i}.mfg
+
+done
+
+
+
