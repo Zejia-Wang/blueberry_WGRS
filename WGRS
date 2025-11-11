@@ -1,0 +1,26 @@
+#tree
+run_pipeline.pl -Xmx30G -SortGenotypeFilePlugin -inputFile clean_deIndel_90_Chr.snp.vcf.gz -outputFile clean_deIndel_90_sorted.snp.vcf.gz -fileType VCF
+
+run_pipeline.pl -Xmx25G -importGuess SNP_clean_sorted.vcf.gz -ExportPlugin -saveAs supergene.phy -format Phylip_Inter
+
+
+fasttree -nt -gtr supergene.phy > fasttree.nwk
+iqtree -s ../supergene.phy -st DNA -T 2 -mem 25G -m GTR -redo -B 1000 -bnni --prefix iqtree
+
+#PCA
+plink --vcf SNP_clean_sorted.vcf.gz --pca 10 --out plink_pca --allow-extra-chr --set-missing-var-ids @:# --vcf-half-call missing
+
+vcftools --gzvcf SNP_clean_sorted.vcf.gz --plink --out tmp
+plink --noweb --file tmp --make-bed --out tmp_bfile
+gcta64 --bfile tmp_bfile --make-grm --out tmp_grm
+gcta64 --grm tmp_grm --pca 5 --out tmp_pca
+
+#STRUCTURE
+plink --vcf SNP_clean_sorted.vcf.gz --indep-pairwise 50 10 0.2 --out ld --allow-extra-chr --set-missing-var-ids @:#
+plink --vcf SNP_clean_sorted.vcf.gz --make-bed --extract ld.prune.in --out LDfiltered --recode vcf-iid --keep-allele-order --allow-extra-chr --set-missing-var-ids @:#
+vcftools --vcf LDfiltered.vcf --plink --out plink
+plink --noweb --file plink --recode12 --out admixture --allow-extra-chr --keep-allele-order
+admixture -j2 -C 0.01 --cv admixture.ped 2 > admixture.log2.out
+
+
+
