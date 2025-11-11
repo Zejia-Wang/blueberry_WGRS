@@ -1,0 +1,9 @@
+for i in `cat sample`
+do
+hisat2 --new-summary -p 4 -x index/GENOME -1 data/${i}.1.fq -2 data/${i}.2.fq -S ${i}.sam 1>${i}.log 2>&1
+samtools sort -o ${i}.bam ${i}.sam
+samtools view -@ 8 -bh -q 30 ${i}.bam -o ${i}_q30.bam
+samtools index ${i}_q30.bam
+Rscript run-featurecounts_PE.R -b ../1mapping/${i}_final.bam -g blubberry.gtf -o ${i}
+
+done
